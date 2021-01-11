@@ -19,18 +19,50 @@ class MainActivity : AppCompatActivity() {
         //if main is cancel then all the other thread will be cancelled also
         //every coroutines has its own coroutinescope instance attached to it
 
-        variousCoroutines()
+        coroutineBuilder()
+        /*variousCoroutines()
         coroutineContextDemo()
-
         firstDemo()
         suspenseDemo()
         coroutineContextSwitching()
         runBlockingTest()
         coroutineJobs()
         coroutineAsyncAndAwait()
-        coroutineScoping()
+        coroutineScoping()*/
+
+    }
+
+    private fun coroutineBuilder() {
+        /*
+        * launch, aynch, runblocking
+        * */
+        //launch {}
+        //GlobalScope.launch{} is companion object
+        // launch function creating coroutine in local scope
+        // runBlocking use to test a function and its block the current thread
+        runBlocking {
+            Log.d(TAG, "coroutineBuilder: $this")
+            val job: Job = launch {
+                //coroutineScope.launch{} return a job
+                Log.d(TAG, "coroutineBuilder: $this")
+                Log.d(TAG, "coroutineBuilder: ${Thread.currentThread().name}")
+            }
 
 
+            val jobDeferred: Deferred<String> = async {
+                //coroutineScope.launch{} return a job
+                Log.d(TAG, "jobDeferred: $this")
+                Log.d(TAG, "jobDeferred: ${Thread.currentThread().name}")
+
+                "mehedi hasan"
+            }
+
+            job.join()
+            //jobDeferred.join()
+            // if we wanna use the return value of job deferred than user jobDeferred.await()
+            val result = jobDeferred.await()
+            Log.d(TAG, "coroutineBuilder: result: $result")
+        }
     }
 
     private fun coroutineContextDemo() {
@@ -53,7 +85,7 @@ class MainActivity : AppCompatActivity() {
              */
             // without parameter coroutine called CONFINED coroutine
             launch {
-                 //it inherit coroutine context from parent coroutine
+                //it inherit coroutine context from parent coroutine
                 Log.d(TAG, "C1 : ${Thread.currentThread().name}")
             }
 
