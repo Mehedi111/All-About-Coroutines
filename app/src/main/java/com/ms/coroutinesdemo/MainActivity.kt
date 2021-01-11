@@ -19,8 +19,11 @@ class MainActivity : AppCompatActivity() {
         //if main is cancel then all the other thread will be cancelled also
         //every coroutines has its own coroutinescope instance attached to it
 
+
+        composingSuspendFunc()
+        coroutineCancellation()
         coroutineBuilder()
-        /*variousCoroutines()
+        variousCoroutines()
         coroutineContextDemo()
         firstDemo()
         suspenseDemo()
@@ -28,10 +31,55 @@ class MainActivity : AppCompatActivity() {
         runBlockingTest()
         coroutineJobs()
         coroutineAsyncAndAwait()
-        coroutineScoping()*/
+        coroutineScoping()
 
     }
 
+    private fun composingSuspendFunc() {
+        /*
+        * 1. Sequential Execution
+        * 2. Concurrent Execution
+        * 3. Lazy coroutines Execution
+        * */
+
+        runBlocking {
+            val one = msgOne()
+            val two = msgTwo()
+            Log.d(TAG, "composingSuspendFunc: $one $two")
+            val x = async { msgOne() }
+            Log.d(TAG, "composingSuspendFunc: ${x.await()}")
+
+            val x2 = async(start = CoroutineStart.LAZY) { msgOne() }
+            Log.d(TAG, "composingSuspendFunc: ${x2.await()}")
+        }
+    }
+
+    private suspend fun msgOne(): String{
+        delay(1000)
+        Log.d(TAG, "msgOne: called msg one")
+        return "Hello "
+    }
+
+    private suspend fun msgTwo(): String{
+        delay(1000)
+        return "World"
+    }
+
+    private fun coroutineCancellation() = runBlocking {
+        Log.d(TAG, "coroutineCancellation: program started")
+        val job: Job = launch {
+            for (i in 1..500){
+                yield()
+                Log.d(TAG, "coroutineCancellation: $i")
+            }
+        }
+
+        delay(200)
+        job.cancelAndJoin()
+        /*job.cancel()
+        job.join()*/
+        Log.d(TAG, "coroutineCancellation: program ended")
+    }
     private fun coroutineBuilder() {
         /*
         * launch, aynch, runblocking
