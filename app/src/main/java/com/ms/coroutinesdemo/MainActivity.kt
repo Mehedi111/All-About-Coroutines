@@ -6,8 +6,8 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.system.measureTimeMillis
 
 class MainActivity : AppCompatActivity() {
@@ -18,7 +18,6 @@ class MainActivity : AppCompatActivity() {
 
         //if main is cancel then all the other thread will be cancelled also
         //every coroutines has its own coroutinescope instance attached to it
-
 
         composingSuspendFunc()
         coroutineCancellation()
@@ -32,6 +31,121 @@ class MainActivity : AppCompatActivity() {
         coroutineJobs()
         coroutineAsyncAndAwait()
         coroutineScoping()
+        coroutineFlow()
+    }
+
+    private fun coroutineFlow() {
+        /**
+         * flow has 3 component
+         * flow{} - builder use to create flow asFlow() or flowOf()
+         * emit(value) - transmit a value
+         * collect(value) - receive the value
+         *
+         * In coroutine, a flow is a type that can emit multiple values sequentially, as opposed to suspend function
+         * that is return only single value
+         * we can use flow to receive live updates from db
+         * @{link: https://developer.android.com/kotlin/flow }
+         * @see <a href="https://developer.android.com/kotlin/flow">link</a>
+         * @see [link](https://developer.android.com/kotlin/flow)
+         *
+         * flow cant cancel itself, we need to cancel coroutine to cancel flow
+         */
+
+
+        runBlocking {
+
+               val job = launch {
+                   //consumer or downstream
+                   sendNumbers().buffer().collect {
+                       delay(2000)
+                       Log.d(TAG, "coroutineFlow: receive Number $it")
+                   }
+               }
+
+            /*(1..100).asFlow()
+                .map {
+                    delay(1000)
+                    it
+                }
+                .filter {
+                    it % 2 == 1
+                }
+                .onEach { check(it != 9) }
+                .catch { e ->
+                    Log.d(TAG, "coroutineFlow: ${e.message}")
+                }
+                .onCompletion {
+                    Log.d(TAG, "coroutineFlow: completed")
+                }
+                *//*.transform {
+                    emit("emitting : $it")
+                }*//*
+                .collect {
+                    Log.d(TAG, "coroutineFlow: $it")
+                }*/
+
+        }
+
+
+    }
+
+    /**
+     * flow example
+     */
+    fun sendNumbers(): Flow<Int> {
+        return flow<Int> {
+            //producer or upstream
+            val numbers = arrayOf(1, 2, 3, 4, 5, 6, 8, 3, 4, 5, 6, 2, 4, 5, 3, 2, 1)
+            numbers.forEach {
+                emit(it)
+                delay(1000)
+            }
+        }
+        /*return listOf(1,2,3,4,5,6,7,8,9,10).asFlow()*/
+        /*return flowOf(1,2,3,4,5,6,7)*/
+    }
+
+
+    tailrec fun fib(n: Int, s: Int, e: Int): Int { // 3, 1, 0
+        return if (n == 0) {
+            e
+        } else {
+            fib(n - 1, s + e, s)
+            // 2, 1, 1 = 1
+            // 1, 2, 1 =
+            // 0, 3, 2 =
+        }
+    }
+
+    private fun varAgsTest(vararg b: String, a: Int, s: String = "j") {
+
+    }
+
+    private fun infixFun() {
+        //infix function must have only one parameter
+        //we can use infix func like sentense it use to increase readability
+        // every infix function is an extension function but every extension funtion is not infix function
+        val sqrt = 10 pow 30.0
+    }
+
+    private infix fun Int.pow(double: Double): Double {
+        return Math.sqrt(double)
+    }
+
+
+    private fun varAgsTest(string: String, vararg ints: Int, ok: String) {
+
+    }
+
+    private fun testJobs() {
+        val job = Job()
+        CoroutineScope(Dispatchers.Main + job).launch {
+            Log.d(TAG, "testJobs: started")
+            delay(2000)
+            Log.d(TAG, "testJobs: end")
+        }
+
+        job.cancel()
 
     }
 
@@ -54,13 +168,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun msgOne(): String{
+    private suspend fun msgOne(): String {
         delay(1000)
         Log.d(TAG, "msgOne: called msg one")
         return "Hello "
     }
 
-    private suspend fun msgTwo(): String{
+    private suspend fun msgTwo(): String {
         delay(1000)
         return "World"
     }
@@ -68,7 +182,7 @@ class MainActivity : AppCompatActivity() {
     private fun coroutineCancellation() = runBlocking {
         Log.d(TAG, "coroutineCancellation: program started")
         val job: Job = launch {
-            for (i in 1..500){
+            for (i in 1..500) {
                 yield()
                 Log.d(TAG, "coroutineCancellation: $i")
             }
@@ -80,6 +194,7 @@ class MainActivity : AppCompatActivity() {
         job.join()*/
         Log.d(TAG, "coroutineCancellation: program ended")
     }
+
     private fun coroutineBuilder() {
         /*
         * launch, aynch, runblocking
@@ -197,16 +312,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun coroutineScoping() {
         findViewById<Button>(R.id.goNext).setOnClickListener {
-            lifecycleScope.launch { // dont use global scope in this situation, use lifecycler scope
-                while (true) {
-                    delay(1000L)
-                    Log.d(TAG, "coroutineScoping: still running")
+            val job = CoroutineScope(Dispatchers.Main).launch {
+                // don't use global scope in this situation, use lifecycler scope
+                try {
+                    while (true) {
+                        delay(1000L)
+                        Log.d(TAG, "coroutineScoping: still running")
+                    }
+                } catch (e: Exception) {
+                    Log.d(TAG, "coroutineScoping: cancel ${e.message}")
                 }
             }
 
             GlobalScope.launch {
                 delay(3000L)
                 Intent(this@MainActivity, SecondActivity::class.java).also {
+                    job.cancelAndJoin()
                     startActivity(it)
                     finish()
                 }
