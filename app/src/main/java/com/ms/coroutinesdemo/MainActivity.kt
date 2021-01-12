@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
         //if main is cancel then all the other thread will be cancelled also
         //every coroutines has its own coroutinescope instance attached to it
 
-        composingSuspendFunc()
+       /* composingSuspendFunc()
         coroutineCancellation()
         coroutineBuilder()
         variousCoroutines()
@@ -30,8 +30,10 @@ class MainActivity : AppCompatActivity() {
         runBlockingTest()
         coroutineJobs()
         coroutineAsyncAndAwait()
+        coroutineFlow()*/
+
         coroutineScoping()
-        coroutineFlow()
+
     }
 
     private fun coroutineFlow() {
